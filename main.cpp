@@ -3,10 +3,9 @@
 extern "C"{
 #include "libavformat/avformat.h"
 #include "libavcodec/avcodec.h"
+#include "libswscale/swscale.h"
 }
 using namespace std;
-//#pragma comment(lib,"avformat.lib")
-//#pragma comment(lib,"avutil.lib")
 
 static double avio_r2d(AVRational ration)
 {
@@ -37,7 +36,7 @@ static void write_one_frame(const char* path, AVFrame* frame)
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
-    const char *path = "E:\\test.mp4";
+    const char *path = "test.mp4";
     //初始化封装库
     av_register_all();
 
@@ -134,6 +133,18 @@ int main(int argc, char *argv[])
     AVPacket *pkt = (AVPacket *) malloc(sizeof(AVPacket)); //分配一个packet
     av_new_packet(pkt, videoCodecContext->width * videoCodecContext->height);
     //av_init_packet(pkt);
+    SwsContext *sws = sws_getContext(videoStream->codec->width,
+                                     videoStream->codec->height,
+                                     videoStream->codec->pix_fmt,
+                                     videoStream->codec->width,
+                                     videoStream->codec->height,
+                                     AV_PIX_FMT_RGB24,
+                                     SWS_BILINEAR,
+                                     NULL,
+                                     NULL,
+                                     NULL
+                                     );
+    unsigned char* rgb = NULL;
     while(1)
     {
         if(av_read_frame(ic,pkt) != 0)
@@ -149,6 +160,12 @@ int main(int argc, char *argv[])
             avcodec_decode_video2(videoCodecContext, vFrame, &got_pic, pkt);
             if(got_pic != 0)
             {
+                if(rgb == NULL)
+                {
+                    rgb = new unsigned char[vFrame->width * vFrame->height];
+                }
+                int lines = 0;
+                sws_scale(sws, vFrame->data, vFrame->linesize,0,vFrame->height,&rgb,&lines);
                 write_one_frame("E:\\test.yuv", vFrame);
             }
         }

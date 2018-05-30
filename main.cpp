@@ -1,5 +1,6 @@
 #include <QCoreApplication>
 #include <iostream>
+#include "savefile.h"
 extern "C"{
 #include "libavformat/avformat.h"
 #include "libavcodec/avcodec.h"
@@ -157,6 +158,7 @@ int main(int argc, char *argv[])
                                      NULL
                                      );
     uint8_t* rgb[2] = {0};
+    int index = 0;
     while(1)
     {
         if(av_read_frame(ic,pkt) != 0)
@@ -173,6 +175,10 @@ int main(int argc, char *argv[])
             if(got_pic != 0)
             {
                 write_one_frame("E:\\test.yuv", vFrame);
+                if(index++ % 10 == 0)
+                {
+                    SaveFrameAsJepg("E:\\", vFrame, vFrame->width, vFrame->height, index);
+                }
 
                 if(rgb[0] == NULL)
                 {

@@ -33,10 +33,22 @@ static void write_one_frame(const char* path, AVFrame* frame)
     }
     fclose(file);
 }
+
+static void write_rgb24_frame(const char* path, const uint8_t *data, const uint64_t size)
+{
+    FILE *file = fopen(path, "ab+");
+    if(!file)
+    {
+        cout << "can not open file: " << path << endl;
+    }
+    fwrite(data, size, 1, file);
+    fclose(file);
+}
+
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
-    const char *path = "test.mp4";
+    const char *path = "E:\\test.mp4";
     //初始化封装库
     av_register_all();
 
@@ -138,13 +150,13 @@ int main(int argc, char *argv[])
                                      videoStream->codec->pix_fmt,
                                      videoStream->codec->width,
                                      videoStream->codec->height,
-                                     AV_PIX_FMT_RGB24,
-                                     SWS_BILINEAR,
+                                     AV_PIX_FMT_BGR24,
+                                     SWS_BICUBIC,
                                      NULL,
                                      NULL,
                                      NULL
                                      );
-    unsigned char* rgb = NULL;
+    uint8_t* rgb[2] = {0};
     while(1)
     {
         if(av_read_frame(ic,pkt) != 0)
@@ -160,13 +172,23 @@ int main(int argc, char *argv[])
             avcodec_decode_video2(videoCodecContext, vFrame, &got_pic, pkt);
             if(got_pic != 0)
             {
-                if(rgb == NULL)
-                {
-                    rgb = new unsigned char[vFrame->width * vFrame->height];
-                }
-                int lines = 0;
-                sws_scale(sws, vFrame->data, vFrame->linesize,0,vFrame->height,&rgb,&lines);
                 write_one_frame("E:\\test.yuv", vFrame);
+
+                if(rgb[0] == NULL)
+                {
+                    rgb[0] = new unsigned char[vFrame->width * vFrame->height * 3];
+                }
+                int lines[2] = {vFrame->width * 3};
+                // 转换图像翻转,进行如下修正，参考http://blog.sina.com.cn/s/blog_4ae178ba0100s7er.html
+                vFrame->data[0] += vFrame->linesize[0] * (vFrame->height - 1);
+                vFrame->linesize[0] *= -1;
+                vFrame->data[1] += vFrame->linesize[1] * (vFrame->height / 2 - 1);
+                vFrame->linesize[1] *= -1;
+                vFrame->data[2] += vFrame->linesize[2] * (vFrame->height / 2 - 1);
+                vFrame->linesize[2] *= -1;
+
+                int ret = sws_scale(sws, vFrame->data, vFrame->linesize,0,vFrame->height,rgb,lines);
+                write_rgb24_frame("E:\\rgb.yuv", rgb[0], vFrame->width * vFrame->height * 3);
             }
         }
     }

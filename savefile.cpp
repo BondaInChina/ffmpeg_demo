@@ -1,6 +1,6 @@
 #include "savefile.h"
 
-void SaveFrameAsJepg(char* path, AVFrame* frame, int width, int height, int index)
+void SaveFrameAsJepg(const char* path, AVFrame* frame, int width, int height, int index)
 {
     char filePath[255] = {0};
     sprintf(filePath, "%s\\image%d.jpg", path, index);

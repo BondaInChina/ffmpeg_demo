@@ -8,6 +8,18 @@ extern "C"{
 }
 using namespace std;
 
+#ifndef _WIN32
+static const char* mp4File = "/home/bonda/demo/ffmpeg_demo/test.mp4";
+static const char* yuvFile = "/home/bonda/demo/ffmpeg_demo/yuv.yuv";
+static const char* rgbFile = "/home/bonda/demo/ffmpeg_demo/rgb.yuv";
+static const char* jpegFile = "/home/bonda/demo/ffmpeg_demo/jpeg.jpg";
+#else
+static const char* mp4File = "E:\\test.mp4";
+static const char* yuvFile = "E:\\yuv.yuv";
+static const char* rgbFile = "E:\\rgb.yuv";
+static const char* jpegFile = "E:\\jpeg.jpg";
+#endif
+
 static double avio_r2d(AVRational ration)
 {
     return ration.den == 0? 0 : (double)ration.num / (double)ration.den;
@@ -49,7 +61,8 @@ static void write_rgb24_frame(const char* path, const uint8_t *data, const uint6
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
-    const char *path = "E:\\test.mp4";
+    printf("%s\n",avutil_configuration());
+    const char *path = mp4File;
     //初始化封装库
     av_register_all();
 
@@ -174,10 +187,10 @@ int main(int argc, char *argv[])
             avcodec_decode_video2(videoCodecContext, vFrame, &got_pic, pkt);
             if(got_pic != 0)
             {
-                write_one_frame("E:\\test.yuv", vFrame);
+                write_one_frame(yuvFile, vFrame);
                 if(index++ % 10 == 0)
                 {
-                    SaveFrameAsJepg("E:\\", vFrame, vFrame->width, vFrame->height, index);
+                    SaveFrameAsJepg(jpegFile, vFrame, vFrame->width, vFrame->height, index);
                 }
 
                 if(rgb[0] == NULL)
@@ -194,7 +207,7 @@ int main(int argc, char *argv[])
                 vFrame->linesize[2] *= -1;
 
                 int ret = sws_scale(sws, vFrame->data, vFrame->linesize,0,vFrame->height,rgb,lines);
-                write_rgb24_frame("E:\\rgb.yuv", rgb[0], vFrame->width * vFrame->height * 3);
+                write_rgb24_frame(rgbFile, rgb[0], vFrame->width * vFrame->height * 3);
             }
         }
     }

@@ -7,6 +7,6 @@ extern "C"
 #include "libavformat/avformat.h"
 }
 
-void SaveFrameAsJepg(char* path, AVFrame* frame, int width, int height, int index);
+void SaveFrameAsJepg(const char* path, AVFrame* frame, int width, int height, int index);
 
 #endif // SAVEFILE_H

@@ -41,6 +41,8 @@ LIBS += -L/usr/local/ffmpeg/lib \
         -lpostproc \
         -lswresample \
         -lswscale \
+        -L/usr/local/x264/lib \
+        -lx264
 }
 
 # You can also make your code fail to compile if you use deprecated APIs.

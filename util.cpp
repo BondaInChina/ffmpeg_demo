@@ -1,9 +1,53 @@
-#include "savefile.h"
+#include "util.h"
+#include <iostream>
+using namespace std;
+
+double avio_r2d(AVRational ration)
+{
+    return ration.den == 0? 0 : (double)ration.num / (double)ration.den;
+}
+
+void write_one_frame(const char* path, AVFrame* frame)
+{
+    FILE *file = fopen(path, "ab+");
+    if(!file)
+    {
+        cout << "can not open file: " << path << endl;
+    }
+    for(int i = 0; i < frame->height; i++)
+    {
+        fwrite(frame->data[0] + frame->linesize[0] * i, frame->linesize[0], 1, file);
+    }
+    for(int i = 0; i < frame->height / 2; i++)
+    {
+        fwrite(frame->data[1] + frame->linesize[1] * i, frame->linesize[1], 1, file);
+    }
+    for(int i = 0; i < frame->height / 2; i++)
+    {
+        fwrite(frame->data[2] + frame->linesize[2] * i, frame->linesize[2], 1, file);
+    }
+    fclose(file);
+}
+
+void write_rgb24_frame(const char* path, const uint8_t *data, const uint64_t size)
+{
+    FILE *file = fopen(path, "ab+");
+    if(!file)
+    {
+        cout << "can not open file: " << path << endl;
+    }
+    fwrite(data, size, 1, file);
+    fclose(file);
+}
 
 void SaveFrameAsJepg(const char* path, AVFrame* frame, int width, int height, int index)
 {
     char filePath[255] = {0};
+#ifndef _WIN32
+    sprintf(filePath, "%s/image%d.jpg", path, index);
+#else
     sprintf(filePath, "%s\\image%d.jpg", path, index);
+#endif
 
     // 分配AVFormatContext对象
     AVFormatContext *pFormatCtx = avformat_alloc_context();

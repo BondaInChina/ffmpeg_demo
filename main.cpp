@@ -1,62 +1,34 @@
 #include <QCoreApplication>
 #include <iostream>
-#include "savefile.h"
-extern "C"{
-#include "libavformat/avformat.h"
-#include "libavcodec/avcodec.h"
-#include "libswscale/swscale.h"
-}
-using namespace std;
+#include "util.h"
 
 #ifndef _WIN32
-static const char* mp4File = "/home/bonda/demo/ffmpeg_demo/test.mp4";
-static const char* yuvFile = "/home/bonda/demo/ffmpeg_demo/yuv.yuv";
-static const char* rgbFile = "/home/bonda/demo/ffmpeg_demo/rgb.yuv";
-static const char* jpegFile = "/home/bonda/demo/ffmpeg_demo/jpeg.jpg";
+static const char* mp4File = "/home/test.mp4";
+static const char* yuvFile = "/home/liangjf/yuv.yuv";
+static const char* rgbFile = "/home/liangjf/rgb.yuv";
+static const char* jpegFile = "/home/liangjf";
+extern "C"{
+#include "/usr/local/ffmpeg/include/libavformat/avformat.h"
+#include "/usr/local/ffmpeg/include/libavcodec/avcodec.h"
+#include "/usr/local/ffmpeg/include/libswscale/swscale.h"
+}
 #else
 static const char* mp4File = "E:\\test.mp4";
 static const char* yuvFile = "E:\\yuv.yuv";
 static const char* rgbFile = "E:\\rgb.yuv";
 static const char* jpegFile = "E:\\jpeg.jpg";
+extern "C"{
+#include "libavformat/avformat.h"
+#include "libavcodec/avcodec.h"
+#include "libswscale/swscale.h"
+}
 #endif
 
-static double avio_r2d(AVRational ration)
-{
-    return ration.den == 0? 0 : (double)ration.num / (double)ration.den;
-}
+using namespace std;
 
-static void write_one_frame(const char* path, AVFrame* frame)
-{
-    FILE *file = fopen(path, "ab+");
-    if(!file)
-    {
-        cout << "can not open file: " << path << endl;
-    }
-    for(int i = 0; i < frame->height; i++)
-    {
-        fwrite(frame->data[0] + frame->linesize[0] * i, frame->linesize[0], 1, file);
-    }
-    for(int i = 0; i < frame->height / 2; i++)
-    {
-        fwrite(frame->data[1] + frame->linesize[1] * i, frame->linesize[1], 1, file);
-    }
-    for(int i = 0; i < frame->height / 2; i++)
-    {
-        fwrite(frame->data[2] + frame->linesize[2] * i, frame->linesize[2], 1, file);
-    }
-    fclose(file);
-}
 
-static void write_rgb24_frame(const char* path, const uint8_t *data, const uint64_t size)
-{
-    FILE *file = fopen(path, "ab+");
-    if(!file)
-    {
-        cout << "can not open file: " << path << endl;
-    }
-    fwrite(data, size, 1, file);
-    fclose(file);
-}
+
+
 
 int main(int argc, char *argv[])
 {
@@ -110,7 +82,6 @@ int main(int argc, char *argv[])
     //AVSampleFormat;
     cout << "channels = " << audioStream->codec->channels << endl;
 
-
     int64_t time = 200;
     av_seek_frame(ic, videoIndex,
                   (double)time / (double)avio_r2d(videoStream->time_base),
@@ -118,6 +89,7 @@ int main(int argc, char *argv[])
     // 找视频解码器
     AVCodecContext *videoCodecContext= videoStream->codec;
     AVCodec *videoCodec = avcodec_find_decoder
+            //(ic->streams[videoIndex]->);
             (videoCodecContext->codec_id);
     if(videoCodec == NULL)
     {
